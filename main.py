@@ -5,6 +5,11 @@ import os
 from send_email import send_email
 import time
 
+st.set_page_config(
+    page_title="My Passive Safe Ultra Max Pro Secruity Double Glazed Account",
+    page_icon="📧",
+)
+
 # CSV filenames
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
