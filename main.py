@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
-import hashlib
 import os
 from send_email import send_email
 import time
-
+import functions
 st.set_page_config(
     page_title="My Passive Safe Ultra Max Pro Secruity Double Glazed Account",
     page_icon="📧",
@@ -12,302 +11,8 @@ st.set_page_config(
 )
 
 # CSV filenames
-USER_DATA_FILE = 'users.csv'
-MESSAGE_DATA_FILE = 'messages.csv'
-QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
-GROUPS_FILE = 'groups.csv'
-GROUP_MESSAGES_FILE = 'group_messages.csv'
 
 # Function to hash passwords
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-# Function to verify user credentials
-def verify_user(username, password):
-    if not os.path.exists(USER_DATA_FILE):
-        return False, None
-    users_df = pd.read_csv(USER_DATA_FILE)
-    hashed_password = hash_password(password)
-    user = users_df[(users_df['username'] == username) & (users_df['password'] == hashed_password)]
-    return not user.empty, user['user_id'].values[0] if not user.empty else None
-
-# Function to check if ID is unique
-def is_id_unique(user_id):
-    if not os.path.exists(USER_DATA_FILE):
-        return True
-    users_df = pd.read_csv(USER_DATA_FILE)
-    return user_id not in users_df['user_id'].values
-
-# Function to get username from user_id
-def get_username(user_id):
-    if not os.path.exists(USER_DATA_FILE):
-        return None
-    users_df = pd.read_csv(USER_DATA_FILE)
-    user = users_df[users_df['user_id'] == user_id]
-    return user['username'].values[0] if not user.empty else None
-
-# Sign-up system
-def sign_up(username, password, user_id):
-    if not os.path.exists(USER_DATA_FILE):
-        users_df = pd.DataFrame(columns=['username', 'password', 'user_id'])
-    else:
-        users_df = pd.read_csv(USER_DATA_FILE)
-        
-    if username in users_df['username'].values:
-        st.error('Username already exists. Please choose another.')
-    elif not is_id_unique(user_id):
-        st.error('ID already exists. Please choose another.')
-    else:
-        hashed_password = hash_password(password)
-        new_user = pd.DataFrame([[username, hashed_password, user_id]], columns=['username', 'password', 'user_id'])
-        users_df = pd.concat([users_df, new_user], ignore_index=True)
-        users_df.to_csv(USER_DATA_FILE, index=False)
-        st.success('Sign-up successful!')
-        send_message("The System!", user_id, "Thank You For Signing Up!", "Welcome To Your Passive Safe Ultra Max Pro Secruity Double Glazed Account! :O\n You Now Rock :~)")
-
-# Login system
-def login(username, password):
-    valid, user_id = verify_user(username, password)
-    if valid:
-        st.success(f'Login successful! Welcome {username} (ID: {user_id})')
-        return (user_id, username)
-    else:
-        st.error('Invalid username or password.')
-        return None
-
-# Function to send a message
-def send_message(sender_id, recipient_id, subject, message):
-    if not os.path.exists(MESSAGE_DATA_FILE):
-        messages_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'subject', 'message'])
-    else:
-        messages_df = pd.read_csv(MESSAGE_DATA_FILE)
-        
-    if is_id_unique(recipient_id):
-        st.error('Recipient ID does not exist.')
-    else:
-        new_message = pd.DataFrame([[sender_id, recipient_id, subject, message]], columns=['sender_id', 'recipient_id', 'subject', 'message'])
-        messages_df = pd.concat([messages_df, new_message], ignore_index=True)
-        messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
-        st.success('Message sent successfully!')
-
-
-
-# Function to send a Quick Chat message
-def send_quick_chat(sender_id, recipient_id, message):
-    if not os.path.exists(QUICK_CHAT_DATA_FILE):
-        quick_chat_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
-    else:
-        quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
-    message = f"""{message}
-    \n
-    ID: {sender_id}"""
-    new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
-    quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
-    quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
-    st.rerun()
-
-def send_group_chat_message(group_id, sender_id, message):
-    # Check if the group_messages.csv file exists, and if not, create an empty DataFrame
-    if not os.path.exists(GROUP_MESSAGES_FILE):
-        group_messages_df = pd.DataFrame(columns=['group_id', 'sender_id', 'message'])
-    else:
-        group_messages_df = pd.read_csv(GROUP_MESSAGES_FILE)
-
-    # Format the message with the sender's ID
-    message_formatted = f"""{message}
-    
-    ID: {sender_id}"""
-    
-    # Create a new DataFrame row for the message
-    new_message = pd.DataFrame([[group_id, sender_id, message_formatted]], columns=['group_id', 'sender_id', 'message'])
-    
-    # Concatenate the new message with the existing DataFrame
-    group_messages_df = pd.concat([group_messages_df, new_message], ignore_index=True)
-    
-    # Save the updated DataFrame to the CSV file
-    group_messages_df.to_csv(GROUP_MESSAGES_FILE, index=False)
-    
-    # Rerun the app to reflect the changes
-    st.rerun()
-
-# Function to delete a message
-def delete_message(index):
-    if not os.path.exists(MESSAGE_DATA_FILE):
-        st.error("No messages to delete.")
-        return
-    
-    messages_df = pd.read_csv(MESSAGE_DATA_FILE)
-    if index >= len(messages_df):
-        st.error("Invalid message index.")
-        return
-    
-    messages_df = messages_df.drop(index).reset_index(drop=True)
-    messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
-    st.success("Message deleted successfully")
-
-# Function to view received messages
-def view_messages(user_id):
-
-    if not os.path.exists(MESSAGE_DATA_FILE):
-        st.write("No messages found.")
-        return
-    
-    messages_df = pd.read_csv(MESSAGE_DATA_FILE)
-    received_messages = messages_df[messages_df['recipient_id'] == user_id]
-    
-    if received_messages.empty:
-        st.write("No messages.")
-    else:
-        for index, row in received_messages.iterrows():
-            sender_username = get_username(row['sender_id'])
-            subject = row['subject']
-            
-            # Create an expander to view/collapse the message
-            with st.expander(f"Subject: {subject} (From {sender_username})", expanded=False):
-                st.write(f"From: {sender_username}")
-                st.write(f"Message: {row['message']}")
-                st.write(f"ID: {row['sender_id']}")
-                if st.button(f"Delete Message"):
-                    delete_message(index)  # Delete the message and refresh
-    time.sleep(2)
-    st.rerun()
-# Function to count new messages
-def count_new_messages(user_id):
-    if not os.path.exists(MESSAGE_DATA_FILE):
-        return 0
-    
-    messages_df = pd.read_csv(MESSAGE_DATA_FILE)
-    received_messages = messages_df[messages_df['recipient_id'] == user_id]
-    return len(received_messages)
-
-# Function to view Quick Chat messages
-def view_quick_chat(user_id):
-    if not os.path.exists(QUICK_CHAT_DATA_FILE):
-        st.write("No Quick Chat messages found.")
-        return
-    
-    quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
-    user_messages = quick_chat_df[(quick_chat_df['sender_id'] == user_id) | (quick_chat_df['recipient_id'] == user_id)]
-    
-    if user_messages.empty:
-        st.write("No Quick Chat messages.")
-    else:
-        for index, row in user_messages.iterrows():
-            sender_username = get_username(row['sender_id'])
-            recipient_username = get_username(row['recipient_id'])
-            with st.chat_message('human'):
-                st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
-                st.write(f"**Message:** {row['message']}")
-
-def change_user_id(username, current_password, new_user_id):
-    # Verify current password
-    valid, user_id = verify_user(username, current_password)
-    if not valid:
-        st.error("Current password is incorrect.")
-        return
-
-def load_groups():
-    if not os.path.exists(GROUPS_FILE):
-        return pd.DataFrame(columns=['group_id', 'admin_id'])
-    return pd.read_csv(GROUPS_FILE)
-
-# Function to save groups
-def save_groups(groups_df):
-    groups_df.to_csv(GROUPS_FILE, index=False)
-
-# Function to load group messages
-def load_group_messages():
-    if not os.path.exists(GROUP_MESSAGES_FILE):
-        return pd.DataFrame(columns=['group_id', 'sender_id', 'message'])
-    return pd.read_csv(GROUP_MESSAGES_FILE)
-
-# Function to save group messages
-def save_group_messages(group_messages_df):
-    group_messages_df.to_csv(GROUP_MESSAGES_FILE, index=False)
-
-# Function to create a new group
-def create_new_group(admin_id):
-    groups_df = load_groups()
-    new_group_id = st.text_input("Name of Group (Group ID):", help="This will be the Group ID")
-    if st.button("Create Group"):
-        if new_group_id in groups_df['group_id'].values:
-            st.error("Group ID already exists. Please choose another.")
-        else:
-            new_group = pd.DataFrame([[new_group_id, admin_id]], columns=['group_id', 'admin_id'])
-            updated_groups_df = pd.concat([groups_df, new_group], ignore_index=True)
-            save_groups(updated_groups_df)
-            st.success(f"New group created with ID: {new_group_id}")
-            return new_group_id
-    return None
-
-# Function to join a group
-def join_group(group_id):
-    groups_df = load_groups()
-    if group_id in groups_df['group_id'].values:
-        st.success(f"Joined group with ID: {group_id}")
-        return True
-    else:
-        st.error("Group ID does not exist.")
-        return False
-
-# Function to send group messages
-def send_group_chat_message(group_id, sender_id, message):
-    group_messages_df = load_group_messages()
-    message_formatted = f"{message}"
-    new_message = pd.DataFrame([[group_id, sender_id, message_formatted]], columns=['group_id', 'sender_id', 'message'])
-    group_messages_df = pd.concat([group_messages_df, new_message], ignore_index=True)
-    save_group_messages(group_messages_df)
-    st.rerun()
-
-# Group chat system
-def group_chat_system():
-    if 'logged_in_user_id' not in st.session_state:
-        st.error("You need to log in first!")
-        return
-
-    logged_in_user_id = st.session_state['logged_in_user_id']
-    groups_df = load_groups()
-    group_messages_df = load_group_messages()
-
-    st.subheader("Group Chat System")
-
-    # Create or join group section
-    create_or_join = st.radio("Do you want to create or join a group?", ("Create", "Join"))
-
-    if create_or_join == "Create":
-        create_new_group(logged_in_user_id)
-
-    if create_or_join == "Join":
-        group_id_to_join = st.text_input("Enter Group ID to join")
-        if st.button("Join Group"):
-            join_group(group_id_to_join)
-
-    # List the user's groups
-    st.subheader("Your Groups")
-    user_groups = groups_df[groups_df['admin_id'] == logged_in_user_id]
-
-    if not user_groups.empty:
-        for index, row in user_groups.iterrows():
-            group_id = row['group_id']
-            st.write(f"Group ID: {group_id}")
-
-            # Show group chat messages in an expander
-            with st.expander(f"Group **{group_id}**", expanded=False):
-                group_messages = group_messages_df[group_messages_df['group_id'] == group_id]
-                if group_messages.empty:
-                    st.write("No messages in this group.")
-                else:
-                    for msg_index, msg_row in group_messages.iterrows():
-                        sender_username = get_username(msg_row['sender_id'])
-                        with st.chat_message("human"):
-                            st.write(f"**{sender_username}**: {msg_row['message']}")
-
-                # Chat input for group members to send a message
-                message = st.chat_input(f"Send a message to Group {group_id}")
-                if message:
-                    send_group_chat_message(group_id, logged_in_user_id, message)
-    else:
-        st.write("You are not part of any groups.")
 
 # Streamlit UI
 st.title("Internal Email App")
@@ -317,7 +22,7 @@ menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", 
 choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
-    new_messages_count = count_new_messages(st.session_state['logged_in_user_id'])
+    new_messages_count = functions.count_new_messages(st.session_state['logged_in_user_id'])
     menu[4] = f"View Messages ({new_messages_count})"
 
 if choice == "Sign Up":
@@ -326,20 +31,20 @@ if choice == "Sign Up":
     password = st.text_input("Password", type="password")
     user_id = st.text_input("Unique ID")
     if st.button("Sign Up"):
-        sign_up(username, password, user_id)
+        functions.sign_up(username, password, user_id)
 
 elif choice == "Login":
     st.subheader("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
-        logged_in_user = login(username, password)
+        logged_in_user = functions.login(username, password)
         
         if logged_in_user:
             st.sidebar.write(f"Logged in as {logged_in_user[1]}")
             st.session_state['logged_in_user_id'] = logged_in_user[0]
             # Update the number of new messages after login
-            new_messages_count = count_new_messages(logged_in_user[0])
+            new_messages_count = functions.count_new_messages(logged_in_user[0])
             menu[4] = f"View Messages ({new_messages_count})"
 
 elif choice == "Send Message":
@@ -351,14 +56,14 @@ elif choice == "Send Message":
         subject = st.text_input("Subject")
         message = st.text_area("Message")
         if st.button("Send"):
-            send_message(st.session_state['logged_in_user_id'], recipient_id, subject, message)
+            functions.send_message(st.session_state['logged_in_user_id'], recipient_id, subject, message)
 
 elif choice == "View Messages":
     if 'logged_in_user_id' not in st.session_state:
         st.error("You need to log in first!")
     else:
         st.subheader("View Messages")
-        view_messages(st.session_state['logged_in_user_id'])
+        functions.view_messages(st.session_state['logged_in_user_id'])
 
 elif choice == "Send Message To External Profile":
     if 'logged_in_user_id' not in st.session_state:
@@ -379,15 +84,15 @@ elif choice == "Quick Chat":
         st.subheader("Quick Chat! :O")
         if st.button("Clear Cache"):
             empty_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
-            empty_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+            empty_df.to_csv(functions.QUICK_CHAT_DATA_FILE, index=False)
             st.success("Quick Chat Cache Cleared!")
             st.rerun()
         recipient_id = st.text_input("What is their ID?")
-        view_quick_chat(st.session_state['logged_in_user_id'])
+        functions.view_quick_chat(st.session_state['logged_in_user_id'])
         if recipient_id:
             message = st.chat_input()
             if message:
-                send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
+                functions.send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
             time.sleep(2)
             st.rerun()
 
@@ -395,7 +100,7 @@ elif choice == "Group Chat (NEW)":
     if 'logged_in_user_id' not in st.session_state:
         st.error("You need to log in first!")
     else:
-        group_chat_system()
+        functions.group_chat_system()
 
 
 elif choice == "⚙️ Settings":
@@ -420,18 +125,18 @@ elif choice == "⚙️ Settings":
                     st.error("New passwords do not match.")
                 else:
                     # Verify the current password
-                    valid, user_id = verify_user(st.session_state['logged_in_username'], current_password)
+                    valid, user_id = functions.verify_user(st.session_state['logged_in_username'], current_password)
                     if not valid:
                         st.error("Current password is incorrect.")
                     else:
                         # Update the password
-                        hashed_new_password = hash_password(new_password)
-                        if not os.path.exists(USER_DATA_FILE):
+                        hashed_new_password = functions.hash_password(new_password)
+                        if not os.path.exists(functions.USER_DATA_FILE):
                             st.error("User data file does not exist.")
                         else:
-                            users_df = pd.read_csv(USER_DATA_FILE)
+                            users_df = pd.read_csv(functions.USER_DATA_FILE)
                             users_df.loc[users_df['user_id'] == user_id, 'password'] = hashed_new_password
-                            users_df.to_csv(USER_DATA_FILE, index=False)
+                            users_df.to_csv(functions.USER_DATA_FILE, index=False)
                             st.success("Password changed successfully!")
         
         if st.button("SIGN OUT"):
