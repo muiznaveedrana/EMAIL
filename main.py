@@ -107,8 +107,7 @@ def delete_message(index):
     
     messages_df = messages_df.drop(index).reset_index(drop=True)
     messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
-    st.success("Message deleted successfully! Please reload to view the difference :O")
-    st.rerun()
+    st.success("Message deleted successfully")
 
 # Function to view received messages
 def view_messages(user_id):
