@@ -15,6 +15,8 @@ st.set_page_config(
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
+GROUPS_FILE = 'groups.csv'
+GROUP_MESSAGES_FILE = 'group_messages.csv'
 
 # Function to hash passwords
 def hash_password(password):
@@ -88,6 +90,8 @@ def send_message(sender_id, recipient_id, subject, message):
         messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
         st.success('Message sent successfully!')
 
+
+
 # Function to send a Quick Chat message
 def send_quick_chat(sender_id, recipient_id, message):
     if not os.path.exists(QUICK_CHAT_DATA_FILE):
@@ -100,6 +104,30 @@ def send_quick_chat(sender_id, recipient_id, message):
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+    st.rerun()
+
+def send_group_chat_message(group_id, sender_id, message):
+    # Check if the group_messages.csv file exists, and if not, create an empty DataFrame
+    if not os.path.exists(GROUP_MESSAGES_FILE):
+        group_messages_df = pd.DataFrame(columns=['group_id', 'sender_id', 'message'])
+    else:
+        group_messages_df = pd.read_csv(GROUP_MESSAGES_FILE)
+
+    # Format the message with the sender's ID
+    message_formatted = f"""{message}
+    
+    ID: {sender_id}"""
+    
+    # Create a new DataFrame row for the message
+    new_message = pd.DataFrame([[group_id, sender_id, message_formatted]], columns=['group_id', 'sender_id', 'message'])
+    
+    # Concatenate the new message with the existing DataFrame
+    group_messages_df = pd.concat([group_messages_df, new_message], ignore_index=True)
+    
+    # Save the updated DataFrame to the CSV file
+    group_messages_df.to_csv(GROUP_MESSAGES_FILE, index=False)
+    
+    # Rerun the app to reflect the changes
     st.rerun()
 
 # Function to delete a message
@@ -178,11 +206,114 @@ def change_user_id(username, current_password, new_user_id):
         st.error("Current password is incorrect.")
         return
 
+def load_groups():
+    if not os.path.exists(GROUPS_FILE):
+        return pd.DataFrame(columns=['group_id', 'admin_id'])
+    return pd.read_csv(GROUPS_FILE)
+
+# Function to save groups
+def save_groups(groups_df):
+    groups_df.to_csv(GROUPS_FILE, index=False)
+
+# Function to load group messages
+def load_group_messages():
+    if not os.path.exists(GROUP_MESSAGES_FILE):
+        return pd.DataFrame(columns=['group_id', 'sender_id', 'message'])
+    return pd.read_csv(GROUP_MESSAGES_FILE)
+
+# Function to save group messages
+def save_group_messages(group_messages_df):
+    group_messages_df.to_csv(GROUP_MESSAGES_FILE, index=False)
+
+# Function to create a new group
+def create_new_group(admin_id):
+    groups_df = load_groups()
+    new_group_id = st.text_input("Name of Group (Group ID):", help="This will be the Group ID")
+    if st.button("Create Group"):
+        if new_group_id in groups_df['group_id'].values:
+            st.error("Group ID already exists. Please choose another.")
+        else:
+            new_group = pd.DataFrame([[new_group_id, admin_id]], columns=['group_id', 'admin_id'])
+            updated_groups_df = pd.concat([groups_df, new_group], ignore_index=True)
+            save_groups(updated_groups_df)
+            st.success(f"New group created with ID: {new_group_id}")
+            return new_group_id
+    return None
+
+# Function to join a group
+def join_group(group_id):
+    groups_df = load_groups()
+    if group_id in groups_df['group_id'].values:
+        st.success(f"Joined group with ID: {group_id}")
+        return True
+    else:
+        st.error("Group ID does not exist.")
+        return False
+
+# Function to send group messages
+def send_group_chat_message(group_id, sender_id, message):
+    group_messages_df = load_group_messages()
+    message_formatted = f"{message}"
+    new_message = pd.DataFrame([[group_id, sender_id, message_formatted]], columns=['group_id', 'sender_id', 'message'])
+    group_messages_df = pd.concat([group_messages_df, new_message], ignore_index=True)
+    save_group_messages(group_messages_df)
+    st.rerun()
+
+# Group chat system
+def group_chat_system():
+    if 'logged_in_user_id' not in st.session_state:
+        st.error("You need to log in first!")
+        return
+
+    logged_in_user_id = st.session_state['logged_in_user_id']
+    groups_df = load_groups()
+    group_messages_df = load_group_messages()
+
+    st.subheader("Group Chat System")
+
+    # Create or join group section
+    create_or_join = st.radio("Do you want to create or join a group?", ("Create", "Join"))
+
+    if create_or_join == "Create":
+        create_new_group(logged_in_user_id)
+
+    if create_or_join == "Join":
+        group_id_to_join = st.text_input("Enter Group ID to join")
+        if st.button("Join Group"):
+            join_group(group_id_to_join)
+
+    # List the user's groups
+    st.subheader("Your Groups")
+    user_groups = groups_df[groups_df['admin_id'] == logged_in_user_id]
+
+    if not user_groups.empty:
+        for index, row in user_groups.iterrows():
+            group_id = row['group_id']
+            st.write(f"Group ID: {group_id}")
+
+            # Show group chat messages in an expander
+            with st.expander(f"Group **{group_id}**", expanded=False):
+                group_messages = group_messages_df[group_messages_df['group_id'] == group_id]
+                if group_messages.empty:
+                    st.write("No messages in this group.")
+                else:
+                    for msg_index, msg_row in group_messages.iterrows():
+                        sender_username = get_username(msg_row['sender_id'])
+                        with st.chat_message("human"):
+                            st.write(f"**{sender_username}**: {msg_row['message']}")
+
+                # Chat input for group members to send a message
+                message = st.chat_input(f"Send a message to Group {group_id}")
+                if message:
+                    send_group_chat_message(group_id, logged_in_user_id, message)
+    else:
+        st.write("You are not part of any groups.")
+
 # Streamlit UI
 st.title("Internal Email App")
 
 # Sidebar menu for navigation
-menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat (NEW)", "⚙️ Settings"]
+menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Group Chat (NEW)" ,"⚙️ Settings"]
 choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
@@ -241,7 +372,7 @@ elif choice == "Send Message To External Profile":
             send_email(message, recipient_email, st.session_state['logged_in_user_id'])
             st.success("External Email Sent!")
 
-elif choice == "Quick Chat (NEW)":
+elif choice == "Quick Chat":
     if 'logged_in_user_id' not in st.session_state:
         st.error("You need to log in first!")
     else:
@@ -259,6 +390,14 @@ elif choice == "Quick Chat (NEW)":
                 send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
             time.sleep(2)
             st.rerun()
+
+elif choice == "Group Chat (NEW)":
+    if 'logged_in_user_id' not in st.session_state:
+        st.error("You need to log in first!")
+    else:
+        group_chat_system()
+
+
 elif choice == "⚙️ Settings":
     if 'logged_in_user_id' not in st.session_state:
         st.error("You need to log in first!")
