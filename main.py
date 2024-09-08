@@ -131,7 +131,7 @@ def view_messages(user_id):
                     st.write(f"From: {sender_username}")
                     st.write(f"Message: {row['message']}")
                     st.write(f"ID: {row['sender_id']}")
-                    if st.button(f"Delete Message", key=f"delete_{index}"):
+                    if st.button(f"Delete Message"):
                         delete_message(index)  # Delete the message and refresh
 
 # Function to count new messages
