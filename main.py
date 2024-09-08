@@ -163,7 +163,8 @@ def view_quick_chat(user_id):
             with st.chat_message('human'):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
-
+    time.sleep(2)
+    st.rerun()
 # Streamlit UI
 st.title("Internal Email App")
 
