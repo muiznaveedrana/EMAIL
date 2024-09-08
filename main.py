@@ -111,29 +111,29 @@ def delete_message(index):
 
 # Function to view received messages
 def view_messages(user_id):
-    while True:
-        if not os.path.exists(MESSAGE_DATA_FILE):
-            st.write("No messages found.")
-            return
-        
-        messages_df = pd.read_csv(MESSAGE_DATA_FILE)
-        received_messages = messages_df[messages_df['recipient_id'] == user_id]
-        
-        if received_messages.empty:
-            st.write("No messages.")
-        else:
-            for index, row in received_messages.iterrows():
-                sender_username = get_username(row['sender_id'])
-                subject = row['subject']
-                
-                # Create an expander to view/collapse the message
-                with st.expander(f"Subject: {subject} (From {sender_username})", expanded=False):
-                    st.write(f"From: {sender_username}")
-                    st.write(f"Message: {row['message']}")
-                    st.write(f"ID: {row['sender_id']}")
-                    if st.button(f"Delete Message"):
-                        delete_message(index)  # Delete the message and refresh
 
+    if not os.path.exists(MESSAGE_DATA_FILE):
+        st.write("No messages found.")
+        return
+    
+    messages_df = pd.read_csv(MESSAGE_DATA_FILE)
+    received_messages = messages_df[messages_df['recipient_id'] == user_id]
+    
+    if received_messages.empty:
+        st.write("No messages.")
+    else:
+        for index, row in received_messages.iterrows():
+            sender_username = get_username(row['sender_id'])
+            subject = row['subject']
+            
+            # Create an expander to view/collapse the message
+            with st.expander(f"Subject: {subject} (From {sender_username})", expanded=False):
+                st.write(f"From: {sender_username}")
+                st.write(f"Message: {row['message']}")
+                st.write(f"ID: {row['sender_id']}")
+                if st.button(f"Delete Message"):
+                    delete_message(index)  # Delete the message and refresh
+    st.rerun()
 # Function to count new messages
 def count_new_messages(user_id):
     if not os.path.exists(MESSAGE_DATA_FILE):
