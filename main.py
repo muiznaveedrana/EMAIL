@@ -247,36 +247,39 @@ elif choice == "Quick Chat (NEW)":
             time.sleep(2)
             st.rerun()
 elif choice == "⚙️ Settings":
-    st.subheader("⚙️ Settings")
-    #email_notifications = st.checkbox('Receive Email Notifications')
-    #sound_notifications = st.checkbox('Enable Sound Notifications for Messages')
-    if st.button('Change Password'):
-    # Inputs for current and new passwords
-        current_password = st.text_input("Current Password", type="password")
-        new_password = st.text_input("New Password", type="password")
-        repeat_new_password = st.text_input("Repeat New Password", type="password")
-        
-        # Add a button to confirm password change
-        if st.button('Confirm Change'):
-            # Check if all fields are filled
-            if not current_password or not new_password or not repeat_new_password:
-                st.error("Please fill in all fields.")
-            elif new_password != repeat_new_password:
-                st.error("New passwords do not match.")
-            else:
-                # Verify the current password
-                valid, user_id = verify_user(st.session_state['logged_in_username'], current_password)
-                if not valid:
-                    st.error("Current password is incorrect.")
+    if 'logged_in_user_id' not in st.session_state:
+        st.error("You need to log in first!")
+    else:
+        st.subheader("⚙️ Settings")
+        #email_notifications = st.checkbox('Receive Email Notifications')
+        #sound_notifications = st.checkbox('Enable Sound Notifications for Messages')
+        if st.button('Change Password'):
+        # Inputs for current and new passwords
+            current_password = st.text_input("Current Password", type="password")
+            new_password = st.text_input("New Password", type="password")
+            repeat_new_password = st.text_input("Repeat New Password", type="password")
+            
+            # Add a button to confirm password change
+            if st.button('Confirm Change'):
+                # Check if all fields are filled
+                if not current_password or not new_password or not repeat_new_password:
+                    st.error("Please fill in all fields.")
+                elif new_password != repeat_new_password:
+                    st.error("New passwords do not match.")
                 else:
-                    # Update the password
-                    hashed_new_password = hash_password(new_password)
-                    if not os.path.exists(USER_DATA_FILE):
-                        st.error("User data file does not exist.")
+                    # Verify the current password
+                    valid, user_id = verify_user(st.session_state['logged_in_username'], current_password)
+                    if not valid:
+                        st.error("Current password is incorrect.")
                     else:
-                        users_df = pd.read_csv(USER_DATA_FILE)
-                        users_df.loc[users_df['user_id'] == user_id, 'password'] = hashed_new_password
-                        users_df.to_csv(USER_DATA_FILE, index=False)
-                        st.success("Password changed successfully!")
-    
+                        # Update the password
+                        hashed_new_password = hash_password(new_password)
+                        if not os.path.exists(USER_DATA_FILE):
+                            st.error("User data file does not exist.")
+                        else:
+                            users_df = pd.read_csv(USER_DATA_FILE)
+                            users_df.loc[users_df['user_id'] == user_id, 'password'] = hashed_new_password
+                            users_df.to_csv(USER_DATA_FILE, index=False)
+                            st.success("Password changed successfully!")
+        
 
