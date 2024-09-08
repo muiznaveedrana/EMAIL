@@ -162,13 +162,20 @@ def view_quick_chat(user_id):
             with st.chat_message('human'):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
+
+def change_user_id(username, current_password, new_user_id):
+    # Verify current password
+    valid, user_id = verify_user(username, current_password)
+    if not valid:
+        st.error("Current password is incorrect.")
+        return
+
 # Streamlit UI
 st.title("Internal Email App")
 
 # Sidebar menu for navigation
-menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat (NEW)"]
-choice = st.sidebar.selectbox("Menu", menu)
-
+menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat (NEW)", "⚙️ Settings"]
+choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
     new_messages_count = count_new_messages(st.session_state['logged_in_user_id'])
@@ -239,3 +246,37 @@ elif choice == "Quick Chat (NEW)":
                 send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
             time.sleep(2)
             st.rerun()
+elif choice == "⚙️ Settings":
+    st.subheader("⚙️ Settings")
+    email_notifications = st.checkbox('Receive Email Notifications')
+    sound_notifications = st.checkbox('Enable Sound Notifications for Messages')
+    if st.button('Change Password'):
+    # Inputs for current and new passwords
+        current_password = st.text_input("Current Password", type="password")
+        new_password = st.text_input("New Password", type="password")
+        repeat_new_password = st.text_input("Repeat New Password", type="password")
+        
+        # Add a button to confirm password change
+        if st.button('Confirm Change'):
+            # Check if all fields are filled
+            if not current_password or not new_password or not repeat_new_password:
+                st.error("Please fill in all fields.")
+            elif new_password != repeat_new_password:
+                st.error("New passwords do not match.")
+            else:
+                # Verify the current password
+                valid, user_id = verify_user(st.session_state['logged_in_username'], current_password)
+                if not valid:
+                    st.error("Current password is incorrect.")
+                else:
+                    # Update the password
+                    hashed_new_password = hash_password(new_password)
+                    if not os.path.exists(USER_DATA_FILE):
+                        st.error("User data file does not exist.")
+                    else:
+                        users_df = pd.read_csv(USER_DATA_FILE)
+                        users_df.loc[users_df['user_id'] == user_id, 'password'] = hashed_new_password
+                        users_df.to_csv(USER_DATA_FILE, index=False)
+                        st.success("Password changed successfully!")
+    
+
