@@ -94,6 +94,35 @@ def send_quick_chat(sender_id, recipient_id, message):
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
     st.rerun()
 
+def delete_account(user_id):
+    # Delete user from USER_DATA_FILE
+    if not os.path.exists(USER_DATA_FILE):
+        st.error("User data file does not exist.")
+        return
+    
+    users_df = pd.read_csv(USER_DATA_FILE)
+    if user_id not in users_df['user_id'].values:
+        st.error("User ID not found.")
+        return
+    
+    # Remove user
+    users_df = users_df[users_df['user_id'] != user_id]
+    users_df.to_csv(USER_DATA_FILE, index=False)
+    
+    # Remove user messages
+    if os.path.exists(MESSAGE_DATA_FILE):
+        messages_df = pd.read_csv(MESSAGE_DATA_FILE)
+        messages_df = messages_df[(messages_df['sender_id'] != user_id) & (messages_df['recipient_id'] != user_id)]
+        messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
+
+    # Remove user Quick Chat messages
+    if os.path.exists(QUICK_CHAT_DATA_FILE):
+        quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
+        quick_chat_df = quick_chat_df[(quick_chat_df['sender_id'] != user_id) & (quick_chat_df['recipient_id'] != user_id)]
+        quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+
+    st.success("Your account has been deleted.")
+
 # Function to delete a message
 def delete_message(index):
     if not os.path.exists(MESSAGE_DATA_FILE):
@@ -282,4 +311,15 @@ elif choice == "⚙️ Settings":
                             users_df.to_csv(USER_DATA_FILE, index=False)
                             st.success("Password changed successfully!")
         
+        if st.button("SIGN OUT"):
+                # Clear session state
+            del st.session_state['logged_in_user_id']
+            st.success("You have been signed out.")
 
+        if st.button("🚨🚨DELETE ACCOUNT🚨🚨"):
+            confirmation = st.text_input("Type 'DELETE' to confirm:")
+            if confirmation == 'DELETE':
+                delete_account(st.session_state['logged_in_user_id'])
+                # Sign out after deletion
+                if 'logged_in_user_id' in st.session_state:
+                    del st.session_state['logged_in_user_id']
