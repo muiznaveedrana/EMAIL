@@ -129,6 +129,7 @@ def view_messages(user_id):
             with st.expander(f"Subject: {subject} (From {sender_username})", expanded=False):
                 st.write(f"From: {sender_username}")
                 st.write(f"Message: {row['message']}")
+                st.write(f"ID: {row['sender_id']}")
                 if st.button(f"Delete Message", key=f"delete_{index}"):
                     delete_message(index)  # Delete the message and refresh
 
