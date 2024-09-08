@@ -163,8 +163,6 @@ def view_quick_chat(user_id):
             with st.chat_message('human'):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
-    time.sleep(2)
-    st.rerun()
 # Streamlit UI
 st.title("Internal Email App")
 
@@ -235,9 +233,10 @@ elif choice == "Quick Chat (NEW)":
     else:
         st.subheader("Quick Chat! :O")
         recipient_id = st.text_input("What is their ID?")
-        
+        view_quick_chat(st.session_state['logged_in_user_id'])
         if recipient_id:
             message = st.chat_input()
             if message:
                 send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
-        view_quick_chat(st.session_state['logged_in_user_id'])
+            time.sleep(2)
+            st.rerun()
