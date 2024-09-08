@@ -8,6 +8,7 @@ import time
 st.set_page_config(
     page_title="My Passive Safe Ultra Max Pro Secruity Double Glazed Account",
     page_icon="📧",
+    layout= "wide"
 )
 
 # CSV filenames
