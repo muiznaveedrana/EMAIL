@@ -96,13 +96,6 @@ elif choice == "Quick Chat":
             time.sleep(2)
             st.rerun()
 
-elif choice == "Group Chat (NEW)":
-    if 'logged_in_user_id' not in st.session_state:
-        st.error("You need to log in first!")
-    else:
-        functions.group_chat_system()
-
-
 elif choice == "⚙️ Settings":
     if 'logged_in_user_id' not in st.session_state:
         st.error("You need to log in first!")
