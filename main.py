@@ -247,7 +247,7 @@ elif choice == "Quick Chat (NEW)":
     else:
         st.subheader("Quick Chat! :O")
         if st.button("Clear Cache"):
-            empty_df = pd.DataFrame()
+            empty_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
             empty_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
             st.success("Quick Chat Cache Cleared!")
             st.rerun()
