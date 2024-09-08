@@ -248,8 +248,8 @@ elif choice == "Quick Chat (NEW)":
             st.rerun()
 elif choice == "⚙️ Settings":
     st.subheader("⚙️ Settings")
-    email_notifications = st.checkbox('Receive Email Notifications')
-    sound_notifications = st.checkbox('Enable Sound Notifications for Messages')
+    #email_notifications = st.checkbox('Receive Email Notifications')
+    #sound_notifications = st.checkbox('Enable Sound Notifications for Messages')
     if st.button('Change Password'):
     # Inputs for current and new passwords
         current_password = st.text_input("Current Password", type="password")
