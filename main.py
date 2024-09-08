@@ -10,11 +10,7 @@ st.set_page_config(
     layout= "wide"
 )
 
-# CSV filenames
-
-# Function to hash passwords
-
-# Streamlit UI
+#
 st.title("Internal Email App")
 
 # Sidebar menu for navigation
