@@ -246,6 +246,11 @@ elif choice == "Quick Chat (NEW)":
         st.error("You need to log in first!")
     else:
         st.subheader("Quick Chat! :O")
+        if st.button("Clear Cache"):
+            empty_df = pd.DataFrame()
+            empty_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+            st.success("Quick Chat Cache Cleared!")
+            st.rerun()
         recipient_id = st.text_input("What is their ID?")
         view_quick_chat(st.session_state['logged_in_user_id'])
         if recipient_id:
