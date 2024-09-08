@@ -62,7 +62,7 @@ def login(username, password):
     valid, user_id = verify_user(username, password)
     if valid:
         st.success(f'Login successful! Welcome {username} (ID: {user_id})')
-        return user_id
+        return (user_id, username)
     else:
         st.error('Invalid username or password.')
         return None
@@ -187,13 +187,13 @@ elif choice == "Login":
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
-        logged_in_user_id = login(username, password)
+        logged_in_user = login(username, password)
         
-        if logged_in_user_id:
-            st.sidebar.write(f"Logged in as {logged_in_user_id}")
-            st.session_state['logged_in_user_id'] = logged_in_user_id
+        if logged_in_user:
+            st.sidebar.write(f"Logged in as {logged_in_user[1]}")
+            st.session_state['logged_in_user_id'] = logged_in_user[0]
             # Update the number of new messages after login
-            new_messages_count = count_new_messages(logged_in_user_id)
+            new_messages_count = count_new_messages(logged_in_user[0])
             menu[4] = f"View Messages ({new_messages_count})"
 
 elif choice == "Send Message":
