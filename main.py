@@ -3,6 +3,7 @@ import pandas as pd
 import hashlib
 import os
 from send_email import send_email
+import time
 
 # CSV filenames
 USER_DATA_FILE = 'users.csv'
@@ -133,6 +134,7 @@ def view_messages(user_id):
                 st.write(f"ID: {row['sender_id']}")
                 if st.button(f"Delete Message"):
                     delete_message(index)  # Delete the message and refresh
+    time.sleep(2)
     st.rerun()
 # Function to count new messages
 def count_new_messages(user_id):
