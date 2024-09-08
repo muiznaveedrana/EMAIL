@@ -14,7 +14,7 @@ st.set_page_config(
 st.title("Internal Email App")
 
 # Sidebar menu for navigation
-menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Group Chat (NEW)" ,"⚙️ Settings"]
+menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "⚙️ Settings"]
 choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
