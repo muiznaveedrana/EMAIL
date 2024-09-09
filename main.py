@@ -11,7 +11,8 @@ st.set_page_config(
 )
 
 #
-st.title("Internal Email App")
+st.title("⚡ULTRA MAX!⚡")
+st.write("__________________________________")
 
 # Sidebar menu for navigation
 menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "⚙️ Settings"]
