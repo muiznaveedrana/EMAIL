@@ -79,10 +79,11 @@ elif choice == "Quick Chat":
     else:
         st.subheader("Quick Chat! :O")
         if st.button("Clear Cache"):
-            empty_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
-            empty_df.to_csv(functions.QUICK_CHAT_DATA_FILE, index=False)
-            st.success("Quick Chat Cache Cleared!")
-            st.rerun()
+            if st.text_input("WHAT IS THE SYSTEM PASSWORD", type="password") == "Muiz2013":
+                empty_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
+                empty_df.to_csv(functions.QUICK_CHAT_DATA_FILE, index=False)
+                st.success("Quick Chat Cache Cleared!")
+                st.rerun()
         recipient_id = st.text_input("What is their ID?")
         functions.view_quick_chat(st.session_state['logged_in_user_id'])
         if recipient_id:

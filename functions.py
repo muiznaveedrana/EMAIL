@@ -6,7 +6,7 @@ import time
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
-GROUP_MESSAGES_FILE = 'group_messages.csv'
+#GROUP_MESSAGES_FILE = 'group_messages.csv'
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -88,36 +88,13 @@ def send_quick_chat(sender_id, recipient_id, message):
     else:
         quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
     message = f"""{message}
-    \n
+
     ID: {sender_id}"""
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
     st.rerun()
 
-def send_group_chat_message(group_id, sender_id, message):
-    # Check if the group_messages.csv file exists, and if not, create an empty DataFrame
-    if not os.path.exists(GROUP_MESSAGES_FILE):
-        group_messages_df = pd.DataFrame(columns=['group_id', 'sender_id', 'message'])
-    else:
-        group_messages_df = pd.read_csv(GROUP_MESSAGES_FILE)
-
-    # Format the message with the sender's ID
-    message_formatted = f"""{message}
-    
-    ID: {sender_id}"""
-    
-    # Create a new DataFrame row for the message
-    new_message = pd.DataFrame([[group_id, sender_id, message_formatted]], columns=['group_id', 'sender_id', 'message'])
-    
-    # Concatenate the new message with the existing DataFrame
-    group_messages_df = pd.concat([group_messages_df, new_message], ignore_index=True)
-    
-    # Save the updated DataFrame to the CSV file
-    group_messages_df.to_csv(GROUP_MESSAGES_FILE, index=False)
-    
-    # Rerun the app to reflect the changes
-    st.rerun()
 
 # Function to delete a message
 def delete_message(index):
@@ -194,3 +171,4 @@ def change_user_id(username, current_password, new_user_id):
     if not valid:
         st.error("Current password is incorrect.")
         return
+
