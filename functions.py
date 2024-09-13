@@ -6,8 +6,9 @@ import time
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
-#GROUP_MESSAGES_FILE = 'group_messages.csv'
-
+FRIENDS_DATA_FILE = "friends.csv"
+ONLINE_PEOPLE = "online.csv"
+FRIEND_REQUEST = "friend_request.csv"
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -58,8 +59,14 @@ def sign_up(username, password, user_id):
 def login(username, password):
     valid, user_id = verify_user(username, password)
     if valid:
+        st.session_state['logged_in_user_id'] = user_id
         st.success(f'Login successful! Welcome {username} (ID: {user_id})')
-        return (user_id, username)
+        online = pd.read_csv(ONLINE_PEOPLE)
+        new_guy = pd.DataFrame()
+        new_guy['user_id'] = [user_id]
+        new_guy['online?'] = [True]
+        online = pd.concat([online, new_guy], ignore_index=False)
+        online.to_csv(ONLINE_PEOPLE, index=False)
     else:
         st.error('Invalid username or password.')
         return None
@@ -79,8 +86,6 @@ def send_message(sender_id, recipient_id, subject, message):
         messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
         st.success('Message sent successfully!')
 
-
-
 # Function to send a Quick Chat message
 def send_quick_chat(sender_id, recipient_id, message):
     if not os.path.exists(QUICK_CHAT_DATA_FILE):
@@ -93,8 +98,8 @@ def send_quick_chat(sender_id, recipient_id, message):
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+    check_inactivity()
     st.rerun()
-
 
 # Function to delete a message
 def delete_message(index):
@@ -135,6 +140,7 @@ def view_messages(user_id):
                 st.write(f"ID: {row['sender_id']}")
                 if st.button(f"Delete Message"):
                     delete_message(index)  # Delete the message and refresh
+    check_inactivity()
     time.sleep(2)
     st.rerun()
 # Function to count new messages
@@ -145,7 +151,7 @@ def count_new_messages(user_id):
     messages_df = pd.read_csv(MESSAGE_DATA_FILE)
     received_messages = messages_df[messages_df['recipient_id'] == user_id]
     return len(received_messages)
-
+   
 # Function to view Quick Chat messages
 def view_quick_chat(user_id):
     if not os.path.exists(QUICK_CHAT_DATA_FILE):
@@ -172,3 +178,121 @@ def change_user_id(username, current_password, new_user_id):
         st.error("Current password is incorrect.")
         return
 
+def send_friend_request(friend_id, user_id):
+    friend_csv = pd.read_csv(FRIEND_REQUEST)
+    if friend_csv[((friend_csv['friender'] == user_id) & (friend_csv['friend'] == friend_id)) | 
+                  ((friend_csv['friend'] == user_id) & (friend_csv['friender'] == friend_id))].empty:
+        current_friends = pd.read_csv(FRIENDS_DATA_FILE)
+        if current_friends[((current_friends['friender'] == user_id) & (current_friends['friended'] == friend_id)) | 
+                       ((current_friends['friended'] == user_id) & (current_friends['friender'] == friend_id))].empty:
+            new = pd.DataFrame([[user_id, friend_id]], columns=["friender", "friend"])
+            friend_csv = pd.concat([friend_csv, new], ignore_index=True)
+            friend_csv.to_csv(FRIEND_REQUEST, index=False)
+            st.success("Friend Request Sent Succesfully")
+            st.balloons()
+        else:
+            st.error("You Are Already Friends. >:(")
+    else:
+        st.error("Something went wrong. You may have sent a friend request to this user already. >:(")
+
+def view_friends(user_id):
+    quick_chat_df = pd.read_csv(FRIENDS_DATA_FILE)
+    friends = quick_chat_df[(quick_chat_df['friender'] == user_id) | (quick_chat_df['friended'] == user_id)]
+    
+    if friends.empty:
+        st.write("No Friends :O")
+    else:
+        for index, row in friends.iterrows():
+            sender_username = get_username(row['friender'])
+            recipient_username = get_username(row['friended'])
+            
+            with st.chat_message('user'):
+                if sender_username == get_username(user_id):
+                    st.write(f"{recipient_username}")
+                    st.write(f"Currently {is_online(row['friended'])}")  # Check recipient
+                else:
+                    st.write(f"**{sender_username}**")
+                    st.write(f"{is_online(row['friender'])}")  # Check sender
+
+
+    time.sleep(3.5)
+    st.rerun()
+
+def make_friend(friend_id, user_id):
+    if is_id_unique(friend_id):
+        st.error('Friend ID does not exist.')
+    else:
+        messages_df = pd.read_csv(FRIENDS_DATA_FILE)
+        new_message = pd.DataFrame([[friend_id, user_id]], columns=['friender', 'friended'])
+        messages_df = pd.concat([messages_df, new_message], ignore_index=True)
+        messages_df.to_csv(FRIENDS_DATA_FILE, index=False)
+        st.balloons()
+        st.rerun()
+
+def view_friend_requests(user_id):
+
+    # Read friend requests from the CSV file
+    friend_requests = pd.read_csv(FRIEND_REQUEST)
+
+    # Filter for friend requests where the 'friend' is the current user (user_id)
+    friends = friend_requests[friend_requests['friend'] == user_id]
+    if not friends.empty:
+    # Iterate over each friend request
+        for index, row in friends.iterrows():
+            friender = row['friender']  # Extract the friender's ID
+            
+            # Display the friend request message
+            st.write(f"You have a new friend request from {friender}")
+            
+            # Accept and Decline buttons
+            if st.button(f"Accept✅", key = index):
+                # Get the friender's ID to accept
+                friend_id = friender
+                make_friend(friend_id, user_id)  # Call your function to accept the friend request
+                
+                # Remove friend request from the CSV
+                friend_requests = friend_requests[friend_requests['friend'] != user_id]
+                friend_requests.to_csv(FRIEND_REQUEST, index=False)
+            
+            if st.button(f"Decline❌", key = f"{index}Hello"):
+                # Remove friend request from the CSV
+                friend_requests = friend_requests[friend_requests['friend'] != user_id]
+                friend_requests.to_csv(FRIEND_REQUEST, index=False)
+
+    else:
+        st.write("No Friend Requests")
+
+def is_online(user_id):
+
+    file = pd.read_csv(ONLINE_PEOPLE)
+    
+    # Assuming user IDs are in a column called 'user_id'
+    online_ids = file['user_id'].tolist()  # Convert the user_id column to a list
+    
+    
+    # Debugging: Check the list of online IDs
+    #st.write(online_ids)
+    
+    # Return 'Online' if the user_id is found in online_ids
+    return "Online" if user_id in online_ids else "Offline"
+
+def remove_user_from_online(user_id):
+    # Read the online.csv file into a DataFrame
+    online_df = pd.read_csv('online.csv')
+    
+    # Remove the user from the online list
+    online_df = online_df[online_df['user_id'] != user_id]
+    
+    # Save the updated DataFrame back to the CSV file
+    online_df.to_csv('online.csv', index=False)
+
+
+
+def check_inactivity(timeout_seconds=100):
+    if 'logged_in_user_id' in st.session_state:
+        if 'last_interaction' not in st.session_state:
+            st.session_state['last_interaction'] = time.time()
+        if time.time() - st.session_state['last_interaction'] > timeout_seconds:
+            st.error("Session expired due to inactivity.")
+            remove_user_from_online(st.session_state['logged_in_user_id'])
+            st.stop()

@@ -10,12 +10,15 @@ st.set_page_config(
     layout= "wide"
 )
 
-#
+
+
+# Timer function to check inactivity
+
+
 st.title("⚡ULTRA MAX!⚡")
 st.write("__________________________________")
 
-# Sidebar menu for navigation
-menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "⚙️ Settings"]
+menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Friends", "⚙️ Settings"]
 choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
@@ -29,6 +32,7 @@ if choice == "Sign Up":
     user_id = st.text_input("Unique ID")
     if st.button("Sign Up"):
         functions.sign_up(username, password, user_id)
+    functions.check_inactivity()
 
 elif choice == "Login":
     st.subheader("Login")
@@ -43,6 +47,7 @@ elif choice == "Login":
             # Update the number of new messages after login
             new_messages_count = functions.count_new_messages(logged_in_user[0])
             menu[4] = f"View Messages ({new_messages_count})"
+    functions.check_inactivity()
 
 elif choice == "Send Message":
     if 'logged_in_user_id' not in st.session_state:
@@ -54,6 +59,7 @@ elif choice == "Send Message":
         message = st.text_area("Message")
         if st.button("Send"):
             functions.send_message(st.session_state['logged_in_user_id'], recipient_id, subject, message)
+    functions.check_inactivity()
 
 elif choice == "View Messages":
     if 'logged_in_user_id' not in st.session_state:
@@ -132,5 +138,24 @@ elif choice == "⚙️ Settings":
         
         if st.button("SIGN OUT"):
                 # Clear session state
+              # You can define this user ID or dynamically determine it
+            functions.remove_user_from_online(st.session_state['logged_in_user_id'])
             del st.session_state['logged_in_user_id']
+            functions.check_inactivity()
             st.success("You have been signed out.")
+
+elif choice == "Friends":
+    if 'logged_in_user_id' not in st.session_state:
+        st.error("You need to log in first!")
+    else:
+        st.subheader("Friends")
+        friend_id = st.text_input("Friend ID")
+        if st.button("Send Friend Request"):
+            functions.send_friend_request(friend_id, st.session_state["logged_in_user_id"])
+        with st.expander("Friend Requests"):
+            functions.view_friend_requests(st.session_state['logged_in_user_id'])
+            #st.write("TEST")
+        functions.view_friends(st.session_state["logged_in_user_id"])
+    functions.check_inactivity()
+
+functions.check_inactivity()
