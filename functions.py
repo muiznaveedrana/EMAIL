@@ -9,6 +9,16 @@ QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
 FRIENDS_DATA_FILE = "friends.csv"
 ONLINE_PEOPLE = "online.csv"
 FRIEND_REQUEST = "friend_request.csv"
+
+def check_inactivity(timeout_seconds=100):
+    if 'logged_in_user_id' in st.session_state:
+        if 'last_interaction' not in st.session_state:
+            st.session_state['last_interaction'] = time.time()
+        if time.time() - st.session_state['last_interaction'] > timeout_seconds:
+            st.error("Session expired due to inactivity.")
+            remove_user_from_online(st.session_state['logged_in_user_id'])
+            st.stop()
+
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -288,11 +298,3 @@ def remove_user_from_online(user_id):
 
 
 
-def check_inactivity(timeout_seconds=100):
-    if 'logged_in_user_id' in st.session_state:
-        if 'last_interaction' not in st.session_state:
-            st.session_state['last_interaction'] = time.time()
-        if time.time() - st.session_state['last_interaction'] > timeout_seconds:
-            st.error("Session expired due to inactivity.")
-            remove_user_from_online(st.session_state['logged_in_user_id'])
-            st.stop()
