@@ -263,12 +263,12 @@ def view_friend_requests(user_id):
                 # Remove friend request from the CSV
                 friend_requests = friend_requests[friend_requests['friend'] != user_id]
                 friend_requests.to_csv(FRIEND_REQUEST, index=False)
-            
+                st.rerun()
             if st.button(f"Decline❌", key = f"{index}Hello"):
                 # Remove friend request from the CSV
                 friend_requests = friend_requests[friend_requests['friend'] != user_id]
                 friend_requests.to_csv(FRIEND_REQUEST, index=False)
-
+                st.rerun()
     else:
         st.write("No Friend Requests")
 
