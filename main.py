@@ -22,8 +22,7 @@ menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", 
 choice = st.sidebar.radio("**Menu**", menu)
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
-    new_messages_count = functions.count_new_messages(st.session_state['logged_in_user_id'])
-    menu[4] = f"View Messages ({new_messages_count})"
+    st.sidebar.info(f"Logged in as {functions.get_username(st.session_state['logged_in_user_id'])}\n\nID = {st.session_state['logged_in_user_id']}")
 
 if choice == "Sign Up":
     st.subheader("Create Account")
@@ -33,22 +32,27 @@ if choice == "Sign Up":
     if st.button("Sign Up"):
         if functions.verify_signup(username, password, user_id):
             functions.sign_up(username, password, user_id)
+            logged_in_user = functions.login(username, password)
+            st.session_state['logged_in_user_id'] = logged_in_user[0]
+            st.sidebar.info(f"Logged in as {functions.get_username(st.session_state['logged_in_user_id'])}\n\nID = {st.session_state['logged_in_user_id']}")
+
     functions.check_inactivity()
 
 elif choice == "Login":
     st.subheader("Login")
+    #logged_in_user = None
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+    #remember_me = st.checkbox("Remember Me")
     if st.button("Login"):
         logged_in_user = functions.login(username, password)
         
         if logged_in_user:
-            st.sidebar.write(f"Logged in as {logged_in_user[1]}")
+            
             st.session_state['logged_in_user_id'] = logged_in_user[0]
-            # Update the number of new messages after login
-            new_messages_count = functions.count_new_messages(logged_in_user[0])
-            menu[4] = f"View Messages ({new_messages_count})"
+            st.sidebar.info(f"Logged in as {functions.get_username(st.session_state['logged_in_user_id'])}\n\nID = {st.session_state['logged_in_user_id']}")
     functions.check_inactivity()
+    #keep
 
 elif choice == "Send Message":
     if 'logged_in_user_id' not in st.session_state:

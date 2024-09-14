@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import time
 import re
+import uuid
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
@@ -94,11 +95,14 @@ def login(username, password):
         st.session_state['logged_in_user_id'] = user_id
         st.success(f'Login successful! Welcome {username} (ID: {user_id})')
         online = pd.read_csv(ONLINE_PEOPLE)
-        new_guy = pd.DataFrame()
-        new_guy['user_id'] = [user_id]
-        new_guy['online?'] = [True]
-        online = pd.concat([online, new_guy], ignore_index=False)
-        online.to_csv(ONLINE_PEOPLE, index=False)
+        if user_id not in online['user_id'].values:
+            new_guy = pd.DataFrame()
+            new_guy['user_id'] = [user_id]
+            new_guy['online?'] = [True]
+            online = pd.concat([online, new_guy], ignore_index=False)
+            online.to_csv(ONLINE_PEOPLE, index=False)
+        
+        return user_id, username
     else:
         st.error('Invalid username or password.')
         return None
@@ -251,7 +255,6 @@ def make_friend(friend_id, user_id):
         messages_df = pd.concat([messages_df, new_message], ignore_index=True)
         messages_df.to_csv(FRIENDS_DATA_FILE, index=False)
         st.balloons()
-        
 
 def view_friend_requests(user_id):
 
@@ -305,6 +308,3 @@ def remove_user_from_online(user_id):
     
     # Save the updated DataFrame back to the CSV file
     online_df.to_csv('online.csv', index=False)
-
-
-
