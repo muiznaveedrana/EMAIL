@@ -31,7 +31,8 @@ if choice == "Sign Up":
     password = st.text_input("Password", type="password")
     user_id = st.text_input("Unique ID")
     if st.button("Sign Up"):
-        functions.sign_up(username, password, user_id)
+        if functions.verify_signup(username, password, user_id):
+            functions.sign_up(username, password, user_id)
     functions.check_inactivity()
 
 elif choice == "Login":
@@ -59,7 +60,7 @@ elif choice == "Send Message":
         message = st.text_area("Message")
         if st.button("Send"):
             functions.send_message(st.session_state['logged_in_user_id'], recipient_id, subject, message)
-    functions.check_inactivity()
+            functions.check_inactivity()
 
 elif choice == "View Messages":
     if 'logged_in_user_id' not in st.session_state:
@@ -141,7 +142,7 @@ elif choice == "⚙️ Settings":
               # You can define this user ID or dynamically determine it
             functions.remove_user_from_online(st.session_state['logged_in_user_id'])
             del st.session_state['logged_in_user_id']
-            functions.check_inactivity()
+            #functions.check_inactivity()
             st.success("You have been signed out.")
 
 elif choice == "Friends":

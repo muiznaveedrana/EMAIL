@@ -3,6 +3,7 @@ import hashlib
 import os
 import pandas as pd
 import time
+import re
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
@@ -10,7 +11,7 @@ FRIENDS_DATA_FILE = "friends.csv"
 ONLINE_PEOPLE = "online.csv"
 FRIEND_REQUEST = "friend_request.csv"
 
-def check_inactivity(timeout_seconds=100):
+def check_inactivity(timeout_seconds=300):
     if 'logged_in_user_id' in st.session_state:
         if 'last_interaction' not in st.session_state:
             st.session_state['last_interaction'] = time.time()
@@ -18,9 +19,30 @@ def check_inactivity(timeout_seconds=100):
             st.error("Session expired due to inactivity.")
             remove_user_from_online(st.session_state['logged_in_user_id'])
             st.stop()
+        else:
+            st.session_state['last_interaction'] = time.time()
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_signup(username, password, user_id):
+    if len(username) < 5:
+        st.error("Username Too Short.")
+        return False
+    if len(password) < 6 or not re.search(r'[A-Z]', password) or not re.search(r'[0-9]', password):
+        st.error("Password must be at least 6 characters long, contain an uppercase letter and a number")
+        return False
+    if len(user_id) < 4:
+        st.error("ID Too Short")
+        return False
+    if username.lower() in password.lower():
+        st.error("Password cannot contain username.")
+        return False
+    if not re.match(r'^[A-Za-z0-9_]+$', username):
+        st.error("Username can only contain letters, numbers, and underscores.")
+        return False
+    return True
+    
 
 # Function to verify user credentials
 def verify_user(username, password):
@@ -108,7 +130,6 @@ def send_quick_chat(sender_id, recipient_id, message):
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
-    check_inactivity()
     st.rerun()
 
 # Function to delete a message
@@ -181,13 +202,6 @@ def view_quick_chat(user_id):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
 
-def change_user_id(username, current_password, new_user_id):
-    # Verify current password
-    valid, user_id = verify_user(username, current_password)
-    if not valid:
-        st.error("Current password is incorrect.")
-        return
-
 def send_friend_request(friend_id, user_id):
     friend_csv = pd.read_csv(FRIEND_REQUEST)
     if friend_csv[((friend_csv['friender'] == user_id) & (friend_csv['friend'] == friend_id)) | 
@@ -203,7 +217,7 @@ def send_friend_request(friend_id, user_id):
         else:
             st.error("You Are Already Friends. >:(")
     else:
-        st.error("Something went wrong. You may have sent a friend request to this user already. >:(")
+        st.error("Something went wrong. >:(")
 
 def view_friends(user_id):
     quick_chat_df = pd.read_csv(FRIENDS_DATA_FILE)
@@ -257,14 +271,11 @@ def view_friend_requests(user_id):
             # Accept and Decline buttons
             if st.button(f"Accept✅", key = index):
                 # Get the friender's ID to accept
+                friend_requests = friend_requests[friend_requests['friend'] != user_id]
+                friend_requests.to_csv(FRIEND_REQUEST, index=False)
                 friend_id = friender
                 make_friend(friend_id, user_id)  
-                # Remove friend request from the CSV
-            
-                friend_requests = friend_requests[friend_requests['friend'] != user_id]
 
-# Save the updated DataFrame back to the CSV file
-                friend_requests.to_csv(FRIEND_REQUEST, index=False)
                 st.rerun()
             if st.button(f"Decline❌", key = f"{index}Hello"):
                 # Remove friend request from the CSV
