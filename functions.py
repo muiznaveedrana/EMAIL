@@ -239,7 +239,7 @@ def view_friends(user_id):
                     st.write(f"{is_online(row['friender'])}")  # Check sender
 
 
-    time.sleep(3.5)
+    time.sleep(5)
     st.rerun()
 
 def make_friend(friend_id, user_id):
@@ -251,7 +251,7 @@ def make_friend(friend_id, user_id):
         messages_df = pd.concat([messages_df, new_message], ignore_index=True)
         messages_df.to_csv(FRIENDS_DATA_FILE, index=False)
         st.balloons()
-        st.rerun()
+        
 
 def view_friend_requests(user_id):
 
@@ -275,12 +275,13 @@ def view_friend_requests(user_id):
                 friend_requests.to_csv(FRIEND_REQUEST, index=False)
                 friend_id = friender
                 make_friend(friend_id, user_id)  
-
+                time.sleep(2)
                 st.rerun()
             if st.button(f"Decline❌", key = f"{index}Hello"):
                 # Remove friend request from the CSV
                 friend_requests = friend_requests[friend_requests['friend'] != user_id]
                 friend_requests.to_csv(FRIEND_REQUEST, index=False)
+                time.sleep(2)
                 st.rerun()
     else:
         st.info("No Friend Requests")
