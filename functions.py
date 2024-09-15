@@ -117,6 +117,12 @@ def send_message(sender_id, recipient_id, subject, message):
     if is_id_unique(recipient_id):
         st.error('Recipient ID does not exist.')
     else:
+        message = f"""
+        {message}
+        Time:
+        Time:{time.strftime('%H:%M')}
+        {time.strftime('%d/%m/%Y')}
+        """
         new_message = pd.DataFrame([[sender_id, recipient_id, subject, message]], columns=['sender_id', 'recipient_id', 'subject', 'message'])
         messages_df = pd.concat([messages_df, new_message], ignore_index=True)
         messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
@@ -130,7 +136,10 @@ def send_quick_chat(sender_id, recipient_id, message):
         quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
     message = f"""{message}
 
-    ID: {sender_id}"""
+    ID: {sender_id}
+    Time:{time.strftime('%H:%M')}
+    {time.strftime('%d/%m/%Y')}
+    """
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)

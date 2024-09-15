@@ -18,8 +18,11 @@ st.set_page_config(
 st.title("⚡ULTRA MAX!⚡")
 st.write("__________________________________")
 
+st.sidebar.write(f"""{time.strftime('%H:%M')}
+{time.strftime('%d/%m/%Y')}""")
 menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Friends", "⚙️ Settings"]
 choice = st.sidebar.radio("**Menu**", menu)
+
 # Add the number of new messages to the menu item
 if 'logged_in_user_id' in st.session_state:
     st.sidebar.info(f"Logged in as {functions.get_username(st.session_state['logged_in_user_id'])}\n\nID = {st.session_state['logged_in_user_id']}")
