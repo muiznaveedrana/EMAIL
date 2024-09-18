@@ -29,8 +29,9 @@ try:
     st.title("⚡ULTRA MAX!⚡")
     st.write("__________________________________")
 
-    st.sidebar.write(f"""{time.strftime('%H:%M')}
+    st.sidebar.write(f"""{time.strftime('%H:%M:%S')}
     {time.strftime('%d/%m/%Y')}""")
+
     menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Friends", "⚙️ Settings"]
     choice = st.sidebar.radio("**Menu**", menu)
 
@@ -104,20 +105,14 @@ try:
             st.error("You need to log in first!")
         else:
             st.subheader("Quick Chat! :O")
-            if st.button("Clear Cache"):
-                if st.text_input("WHAT IS THE SYSTEM PASSWORD", type="password") == "Muiz2013":
-                    empty_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
-                    empty_df.to_csv(functions.QUICK_CHAT_DATA_FILE, index=False)
-                    st.success("Quick Chat Cache Cleared!")
-                    st.rerun()
             recipient_id = st.text_input("What is their ID?")
             functions.view_quick_chat(st.session_state['logged_in_user_id'])
             if recipient_id:
                 message = st.chat_input()
                 if message:
                     functions.send_quick_chat(st.session_state['logged_in_user_id'], recipient_id, message)
-                time.sleep(2)
-                st.rerun()
+            time.sleep(3)
+            st.rerun()
 
     elif choice == "⚙️ Settings":
         if 'logged_in_user_id' not in st.session_state:
@@ -180,3 +175,4 @@ try:
     functions.check_inactivity()
 except:
     var = 1 + 2
+    st.rerun()

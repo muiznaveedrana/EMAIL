@@ -129,14 +129,21 @@ def send_quick_chat(sender_id, recipient_id, message):
         quick_chat_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
     else:
         quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
-    message = f"""{message}
-
-    ID: {sender_id}
-    """
+    message = f"{message}\n\nID: {sender_id}"
     new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
     st.rerun()
+
+def delete_quick(index):
+    messages_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
+    if index >= len(messages_df):
+        st.error("Invalid message index.")
+        return
+    
+    messages_df = messages_df.drop(index).reset_index(drop=True)
+    messages_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
+    #st.success("Message deleted successfully")
 
 # Function to delete a message
 def delete_message(index):
@@ -176,7 +183,9 @@ def view_messages(user_id):
                 st.write(f"Message: {row['message']}")
                 st.write(f"ID: {row['sender_id']}")
                 if st.button(f"Delete Message", key = f"HOLA {index}"):
-                    delete_message(index)  # Delete the message and refresh
+                    delete_message(index)
+                    time.sleep(1)
+                    st.rerun()  # Delete the message and refresh
     check_inactivity()
     time.sleep(2)
     st.rerun()
@@ -207,6 +216,8 @@ def view_quick_chat(user_id):
             with st.chat_message('human'):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
+                if st.button("Delete", key = f"Ya{index}"):
+                    delete_quick(index)
 
 def send_friend_request(friend_id, user_id):
     friend_csv = pd.read_csv(FRIEND_REQUEST)
