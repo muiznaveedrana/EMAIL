@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import time
 import re
-import uuid
+
 USER_DATA_FILE = 'users.csv'
 MESSAGE_DATA_FILE = 'messages.csv'
 QUICK_CHAT_DATA_FILE = 'quick_chat_messages.csv'
@@ -175,7 +175,7 @@ def view_messages(user_id):
                 st.write(f"From: {sender_username}")
                 st.write(f"Message: {row['message']}")
                 st.write(f"ID: {row['sender_id']}")
-                if st.button(f"Delete Message"):
+                if st.button(f"Delete Message", key = f"HOLA {index}"):
                     delete_message(index)  # Delete the message and refresh
     check_inactivity()
     time.sleep(2)
