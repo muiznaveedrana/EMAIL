@@ -44,7 +44,6 @@ def verify_signup(username, password, user_id):
         return False
     return True
     
-
 # Function to verify user credentials
 def verify_user(username, password):
     if not os.path.exists(USER_DATA_FILE):
