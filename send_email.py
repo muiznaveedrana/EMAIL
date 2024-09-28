@@ -9,7 +9,6 @@ def send_email(message, reciever, sender):
 
     with smtplib.SMTP_SSL(host, port, context = my_context) as server:
         server.login(username, password)
-        server.sendmail(username, reciever,f"""\
-                        Subject: Email From {sender}
-                        
-                        You Got An Email From {sender} VIA Passive Safe Ultra Max Pro Secruity Double Glazed Account: Your Message:\n{message}""")
+        message = f"Subject: New Message From {sender} \n From: {sender} VIA ultramax.streamlit.app \n" + message
+
+        server.sendmail(username, reciever,message)

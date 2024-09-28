@@ -14,10 +14,14 @@ st.set_page_config(
     'Get Help': 'https://muiz-portfolio.streamlit.app/Contact_Me',
     'Report a bug': 'https://muiz-portfolio.streamlit.app/Contact_Me',
     'About': '''
-        My Ultra Max Pro App
-        A secure app with advanced features!
-        Version 2.0.0
-    '''
+        My Ultra Max Pro App\n
+        A secure app with advanced features!\n
+        Shout out to Khalid Sarker :)\n
+        Version 2.1.1\n
+        The DEVS: muiznaveedrana@gmail.com & ksarker2013@gmail.com\n
+        ©️
+    ''',
+    
 }
 
 )
@@ -28,10 +32,9 @@ st.set_page_config(
 st.title("⚡ULTRA MAX!⚡")
 st.write("__________________________________")
 
-st.sidebar.write(f"""{time.strftime('%H:%M:%S')}
-{time.strftime('%d/%m/%Y')}""")
+st.sidebar.write(f"{time.strftime('%d/%m/%Y')}")
 
-menu = ["Sign Up", "Login", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Friends", "⚙️ Settings"]
+menu = ["Login", "Sign Up", "Send Message", "Send Message To External Profile", "View Messages", "Quick Chat", "Friends","⚙️ Settings"]
 choice = st.sidebar.radio("**Menu**", menu)
 
 
@@ -172,4 +175,3 @@ elif choice == "Friends":
     functions.check_inactivity()
 
 functions.check_inactivity()
-

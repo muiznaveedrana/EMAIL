@@ -17,8 +17,10 @@ def check_inactivity(timeout_seconds=300):
         if 'last_interaction' not in st.session_state:
             st.session_state['last_interaction'] = time.time()
         if time.time() - st.session_state['last_interaction'] > timeout_seconds:
-            st.error("Session expired due to inactivity.")
+            #st.error("Session expired due to inactivity.")
             remove_user_from_online(st.session_state['logged_in_user_id'])
+            choice = "Login"
+            del st.session_state['logged_in_user_id']
             st.stop()
         else:
             st.session_state['last_interaction'] = time.time()
@@ -109,7 +111,7 @@ def login(username, password):
 # Function to send a message
 def send_message(sender_id, recipient_id, subject, message):
     if not os.path.exists(MESSAGE_DATA_FILE):
-        messages_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'subject', 'message'])
+        messages_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'subject', 'message', 'time'])
     else:
         messages_df = pd.read_csv(MESSAGE_DATA_FILE)
         
@@ -117,7 +119,7 @@ def send_message(sender_id, recipient_id, subject, message):
         st.error('Recipient ID does not exist.')
     else:
         
-        new_message = pd.DataFrame([[sender_id, recipient_id, subject, message]], columns=['sender_id', 'recipient_id', 'subject', 'message'])
+        new_message = pd.DataFrame([[sender_id, recipient_id, subject, message, f"{time.strftime("%H:%M:%S")}\n{time.strftime("%d/%m/%Y")}"]], columns=['sender_id', 'recipient_id', 'subject', 'message', 'time'])
         messages_df = pd.concat([messages_df, new_message], ignore_index=True)
         messages_df.to_csv(MESSAGE_DATA_FILE, index=False)
         st.success('Message sent successfully!')
@@ -125,11 +127,10 @@ def send_message(sender_id, recipient_id, subject, message):
 # Function to send a Quick Chat message
 def send_quick_chat(sender_id, recipient_id, message):
     if not os.path.exists(QUICK_CHAT_DATA_FILE):
-        quick_chat_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message'])
+        quick_chat_df = pd.DataFrame(columns=['sender_id', 'recipient_id', 'message', 'time'])
     else:
         quick_chat_df = pd.read_csv(QUICK_CHAT_DATA_FILE)
-    message = f"{message}\n\nID: {sender_id}"
-    new_message = pd.DataFrame([[sender_id, recipient_id, message]], columns=['sender_id', 'recipient_id', 'message'])
+    new_message = pd.DataFrame([[sender_id, recipient_id, message, f"{time.strftime("%H:%M:%S")}\n{time.strftime("%d/%m/%Y")}"]], columns=['sender_id', 'recipient_id', 'message', 'time'])
     quick_chat_df = pd.concat([quick_chat_df, new_message], ignore_index=True)
     quick_chat_df.to_csv(QUICK_CHAT_DATA_FILE, index=False)
     st.rerun()
@@ -181,6 +182,7 @@ def view_messages(user_id):
                 st.write(f"From: {sender_username}")
                 st.write(f"Message: {row['message']}")
                 st.write(f"ID: {row['sender_id']}")
+                st.text(row['time'])
                 if st.button(f"Delete Message", key = f"HOLA {index}"):
                     delete_message(index)
                     time.sleep(1)
@@ -215,8 +217,11 @@ def view_quick_chat(user_id):
             with st.chat_message('human'):
                 st.write(f"**From:** {sender_username} | **To:** {recipient_username}")
                 st.write(f"**Message:** {row['message']}")
-                if st.button("Delete", key = f"Ya{index}"):
-                    delete_quick(index)
+                with st.expander("**info**"):
+                    st.text(f"ID: {row['sender_id']}")
+                    st.text(row['time'])
+                    if st.button("Delete Message", key = f"Ya{index}"):
+                        delete_quick(index)
 
 def send_friend_request(friend_id, user_id):
     friend_csv = pd.read_csv(FRIEND_REQUEST)
