@@ -14,7 +14,7 @@ st.set_page_config(
     'Get Help': 'https://muiz-portfolio.streamlit.app/Contact_Me',
     'Report a bug': 'https://muiz-portfolio.streamlit.app/Contact_Me',
     'About': '''
-        My Ultra Max Pro App\n
+        My UltraMail Pro App\n
         A secure app with advanced features!\n
         Shout out to Khalid Sarker :)\n
         Version 2.1.1\n
@@ -29,7 +29,7 @@ st.set_page_config(
 
 # Use custom HTML with JavaScript to detect click on the link
 
-st.title("⚡ULTRA MAX!⚡")
+st.title("⚡ULTRAMAIL!⚡")
 st.write("__________________________________")
 try:
     st.sidebar.write(f"{time.strftime('%d/%m/%Y')}")
